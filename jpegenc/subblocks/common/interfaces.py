@@ -11,6 +11,35 @@ class inputs_frontend(object):
         self.data_in = Signal(intbv(0)[24:])
         self.data_valid = Signal(bool(0))
 
+class ram_in(object):
+
+    def __init__(self, data_width=24, address_width=10):
+        self.data_width = data_width
+        self.address_width = address_width
+        self.data_in = Signal(intbv(0)[data_width:])
+        self.write_en = Signal(bool(0))
+        self.read_addr = Signal(intbv(0)[address_width:])
+        self.write_addr = Signal(intbv(0)[address_width:])
+
+class ram_out(object):
+
+    def __init__(self, data_width=24):
+        self.data_out = Signal(intbv(0)[data_width:])
+
+class block_buffer_in(object):
+
+    def __init__(self, data_width=24):
+        self.data_width = data_width
+        self.data_in = Signal(intbv(0)[data_width:])
+        self.data_valid = Signal(bool(0))
+
+class block_buffer_out(object):
+
+    def __init__(self, data_width=24):
+        self.data_out = Signal(intbv(0)[data_width:])
+        self.data_valid = Signal(bool(0))
+        self.stop_source = Signal(bool(0))
+
 class outputs_frontend(object):
 
     def __init__(self, precision_factor=10, N=8):
@@ -79,30 +108,6 @@ class YCbCr(object):
         self.cb = Signal(intbv(0)[nbits:])
         self.cr = Signal(intbv(0)[nbits:])
         self.data_valid = Signal(bool(0))
-
-@block
-def assign(a, b):
-
-    @always_comb
-    def assign():
-            a.next = b
-
-    return assign
-
-
-@block
-def assign_array(a, b):
-
-    assert isinstance(a, list)
-    assert isinstance(b, list)
-    assert len(a) == len(b)
-
-
-    g = []
-    for i in range(len(a)):
-        g += [assign(a[i], b[i])]
-    return g
-
 
 class outputs_2d(object):
 
