@@ -43,6 +43,20 @@ class block_buffer_out(object):
         self.write_all = Signal(bool(0))
         self.read_all = Signal(bool(0))
 
+class triple_buffer_in(object):
+
+    def __init__(self, data_width=24):
+        self.data_width = data_width
+        self.data_in = Signal(intbv(0)[data_width:])
+        self.data_valid = Signal(bool(0))
+
+class triple_buffer_out(object):
+
+    def __init__(self, data_width=24):
+        self.data_width = data_width
+        self.data_out = Signal(intbv(0)[data_width:])
+        self.data_valid = Signal(bool(0))
+
 class outputs_frontend(object):
 
     def __init__(self, precision_factor=10, N=8):

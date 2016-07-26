@@ -14,7 +14,6 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
     addr_width = int(ceil(log2(line_width)))
     block_number = int(line_width/8.0)
     data_width = inputs.data_width
-    source_start = int(block_number) - 1
 
     row_select = Signal(intbv(0, min=0, max=8))
     row_read =  Signal(intbv(0, min=0, max=8))
@@ -26,7 +25,6 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
     pixel_row_write = Signal(intbv(0, min=0, max=line_width))
     pixel_row_read = Signal(intbv(0, min=0, max=line_width))
     start_to_output_data = Signal(bool(0))
-    stop_source = Signal(bool(0))
 
     data_in_temp = [Signal(intbv(0)[data_width:]) for _ in range(8)]
     write_en_temp = [Signal(bool(0)) for _ in range(8)]
@@ -80,7 +78,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
         else:
             pixel_row_write.next = 0
             row_select.next = 0
-            outputs.write_all.next = 0
+            outputs.write_all.next = False
 
     @always_seq(clock.posedge, reset=reset)
     def write_enable_update():
@@ -130,7 +128,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
             row_read.next = 0
             pass_num.next = 0
             current_block.next = 0
-            read_all_reg.next = 0
+            read_all_reg.next = False
 
     @always_seq(clock.posedge, reset=reset)
     def block_update():
