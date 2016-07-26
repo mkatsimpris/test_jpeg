@@ -65,27 +65,15 @@ def test_block_buffer():
         @instance
         def tbstim():
             yield pulse_reset(reset, clock)
+            inputs.data_valid.next = True
+            inputs.ready_to_output_data.next = True
 
             data = 0
             while(data != len(input_list)):
-                if inputs.data_valid == True:
-                    inputs.data_in.next = input_list[data]
-                    data += 1
-                else:
-                    inputs.data_valid.next = False
+                inputs.data_in.next = input_list[data]
+                data += 1
                 yield clock.posedge
             inputs.data_valid.next = False
-
-        @instance
-        def data_valid_assert():
-            yield pulse_reset(reset, clock)
-            while(True):
-                yield clock.posedge
-                yield delay(1)
-                if outputs.stop_source == True:
-                    inputs.data_valid.next = False
-                else:
-                    inputs.data_valid.next = True
 
         @instance
         def monitor():
@@ -93,11 +81,12 @@ def test_block_buffer():
             yield delay(1)
             for i in range(len(output_list)):
                 print("%d %d" %(int(outputs.data_out), output_list[i]))
+                assert outputs.data_out == output_list[i]
                 yield clock.posedge
                 yield delay(1)
             raise StopSimulation
 
-        return tdut, tbstim, tbclock, monitor, data_valid_assert
+        return tdut, tbstim, tbclock, monitor
 
     run_testbench(bench_block_buffer)
 

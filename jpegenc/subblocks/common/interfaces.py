@@ -32,6 +32,7 @@ class block_buffer_in(object):
         self.data_width = data_width
         self.data_in = Signal(intbv(0)[data_width:])
         self.data_valid = Signal(bool(0))
+        self.ready_to_output_data = Signal(bool(0))
 
 class block_buffer_out(object):
 
@@ -39,6 +40,8 @@ class block_buffer_out(object):
         self.data_out = Signal(intbv(0)[data_width:])
         self.data_valid = Signal(bool(0))
         self.stop_source = Signal(bool(0))
+        self.write_all = Signal(bool(0))
+        self.read_all = Signal(bool(0))
 
 class outputs_frontend(object):
 

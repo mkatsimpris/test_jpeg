@@ -21,6 +21,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
     row_read_reg =  Signal(intbv(0, min=0, max=8))
     current_block = Signal(intbv(0, min=0, max=block_number))
     current_block_1 = Signal(intbv(0, min=0, max=block_number))
+    read_all_reg = Signal(bool(0))
 
     pixel_row_write = Signal(intbv(0, min=0, max=line_width))
     pixel_row_read = Signal(intbv(0, min=0, max=line_width))
@@ -58,7 +59,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
         ram_insts += [assign(ram_data_out_temp[i], ram_outputs[i].data_out)]
         ram_insts += [assign(ram_inputs[i].read_addr, pixel_row_read)]
 
-    @always_comb
+    @always_seq(clock.posedge, reset=reset)
     def ram_input_assign():
         for i in range(8):
             data_in_temp[i].next = inputs.data_in
@@ -70,18 +71,16 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
                 pixel_row_write.next = 0
                 if row_select == 7:
                     row_select.next = 0
-                    stop_source.next = True
+                    outputs.write_all.next = True
                 else:
                     row_select.next = row_select + 1
+                    outputs.write_all.next = False
             else:
                 pixel_row_write.next = pixel_row_write + 1
-
-    @always_comb
-    def stop_source_mux():
-        if current_block == source_start and pass_num == 2:
-            outputs.stop_source.next = False
         else:
-            outputs.stop_source.next = stop_source
+            pixel_row_write.next = 0
+            row_select.next = 0
+            outputs.write_all.next = 0
 
     @always_seq(clock.posedge, reset=reset)
     def write_enable_update():
@@ -107,7 +106,8 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
     @always_seq(clock.posedge, reset=reset)
     def pixel_read_update():
         row_read_reg.next = row_read
-        if start_to_output_data:
+        outputs.read_all.next = read_all_reg
+        if start_to_output_data and inputs.ready_to_output_data:
             if pixel_row_read == right_index:
                 pixel_row_read.next = left_index
                 if row_read == 7:
@@ -116,7 +116,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
                         pass_num.next = 0
                         if current_block == block_number - 1:
                             current_block.next = 0
-                            current_block_1.next = 0
+                            read_all_reg.next = True
                         else:
                             current_block.next = current_block + 1
                     else:
@@ -125,6 +125,12 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
                     row_read.next = row_read + 1
             else:
                 pixel_row_read.next = pixel_row_read + 1
+        else:
+            pixel_row_read.next = 0
+            row_read.next = 0
+            pass_num.next = 0
+            current_block.next = 0
+            read_all_reg.next = 0
 
     @always_seq(clock.posedge, reset=reset)
     def block_update():
@@ -151,15 +157,20 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def start_to_output():
-        data_valid_reg_2.next = data_valid_reg_1
-        outputs.data_valid.next = data_valid_reg_2
         if row_select == 7 and pixel_row_write == 7:
             start_to_output_data.next = True
+
+    @always_seq(clock.posedge, reset=reset)
+    def start_to_output_1():
+        outputs.data_valid.next = data_valid_reg_1
+        if start_to_output_data and inputs.ready_to_output_data:
             data_valid_reg_1.next = True
+        else:
+            data_valid_reg_1.next = False
 
     return (ram_insts, ram_input_assign, pixel_write_update, write_enable_update, index_muls,
             write_addr_update, output_assign, start_to_output, pixel_read_update, block_update,
-            right_index_mux, stop_source_mux)
+            right_index_mux, start_to_output_1)
 
 def convert():
 
