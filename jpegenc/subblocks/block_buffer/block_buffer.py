@@ -163,8 +163,10 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
         outputs.data_valid.next = data_valid_reg_1
         if start_to_output_data and inputs.ready_to_output_data:
             data_valid_reg_1.next = True
+            outputs.data_valid.next = data_valid_reg_1
         else:
             data_valid_reg_1.next = False
+            outputs.data_valid.next = data_valid_reg_1
 
     return (ram_insts, ram_input_assign, pixel_write_update, write_enable_update, index_muls,
             write_addr_update, output_assign, start_to_output, pixel_read_update, block_update,
