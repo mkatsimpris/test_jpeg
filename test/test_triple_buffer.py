@@ -80,7 +80,7 @@ def test_triple_buffer():
             yield delay(1)
             for i in range(len(output_list)):
                 print("%d %d" %(int(outputs.data_out), output_list[i]))
-                #assert outputs.data_out == output_list[i]
+                assert outputs.data_out == output_list[i]
                 yield clock.posedge
                 yield delay(1)
             raise StopSimulation

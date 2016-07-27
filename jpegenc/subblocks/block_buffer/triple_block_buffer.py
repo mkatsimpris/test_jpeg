@@ -62,7 +62,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
     @always_seq(clock.posedge, reset=reset)
     def read_counter_update():
         if data_valid_or:
-            if read_counter == data_to_read - 1:
+            if read_counter == data_to_read - 3:
                 read_counter.next = 0
                 if buffer_select_read == 2:
                     buffer_select_read.next = 0
@@ -71,6 +71,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
             else:
                 read_counter.next = read_counter + 1
 
+    """there is a probelm in the ready to output data signals is falls two cycles earlier"""
     @always_comb
     def read_mux():
         if buffer_select_read == 0:
@@ -88,18 +89,23 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_comb
     def write_mux():
-        if buffer_select_write == 0:
-            block_buffer_in_1.data_valid.next = True
-            block_buffer_in_2.data_valid.next = False
-            block_buffer_in_3.data_valid.next = False
-        elif buffer_select_write == 1:
-            block_buffer_in_1.data_valid.next = False
-            block_buffer_in_2.data_valid.next = True
-            block_buffer_in_3.data_valid.next = False
+        if inputs.data_valid:
+            if buffer_select_write == 0:
+                block_buffer_in_1.data_valid.next = True
+                block_buffer_in_2.data_valid.next = False
+                block_buffer_in_3.data_valid.next = False
+            elif buffer_select_write == 1:
+                block_buffer_in_1.data_valid.next = False
+                block_buffer_in_2.data_valid.next = True
+                block_buffer_in_3.data_valid.next = False
+            else:
+                block_buffer_in_1.data_valid.next = False
+                block_buffer_in_2.data_valid.next = False
+                block_buffer_in_3.data_valid.next = True
         else:
-            block_buffer_in_1.data_valid.next = False
-            block_buffer_in_2.data_valid.next = False
-            block_buffer_in_3.data_valid.next = True
+                block_buffer_in_1.data_valid.next = False
+                block_buffer_in_2.data_valid.next = False
+                block_buffer_in_3.data_valid.next = False
 
     @always_seq(clock.posedge, reset=reset)
     def output_assign():
