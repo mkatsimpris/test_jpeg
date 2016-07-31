@@ -190,8 +190,8 @@ def convert():
     clock = Signal(bool(0))
     reset = ResetSignal(1, True, True)
     inst = triple_block_buffer(inputs, outputs, clock, reset)
-    inst.convert(hdl="vhdl")
-    analyze.simulator="ghdl"
+    inst.convert(hdl="verilog")
+    analyze.simulator="iverilog"
     assert inst.analyze_convert() == 0
 
 #convert()
