@@ -18,8 +18,8 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
     row_select = Signal(intbv(0, min=0, max=8))
     row_read =  Signal(intbv(0, min=0, max=8))
     row_read_reg =  Signal(intbv(0, min=0, max=8))
-    current_block = Signal(intbv(0, min=0, max=block_number))
-    current_block_1 = Signal(intbv(0, min=0, max=block_number))
+    current_block = Signal(intbv(0, min=0, max=line_width))
+    current_block_1 = Signal(intbv(0, min=0, max=line_width))
     read_all_reg = Signal(bool(0))
 
     pixel_row_write = Signal(intbv(0, min=0, max=line_width))
@@ -76,8 +76,6 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
             else:
                 pixel_row_write.next = pixel_row_write + 1
         else:
-            pixel_row_write.next = 0
-            row_select.next = 0
             outputs.write_all.next = False
 
     @always_seq(clock.posedge, reset=reset)

@@ -124,6 +124,14 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
             block_buffer_in_3.ready_to_output_data.next = False
             block_buffer_in_4.ready_to_output_data.next = True
 
+
+    @always_seq(clock.posedge, reset=reset)
+    def stop_source():
+        if block_buffer_out_4.write_all:
+            outputs.stop_source.next = True
+        elif block_buffer_out_3.read_all:
+            outputs.stop_source.next = False
+
     @always_comb
     def write_mux():
         if inputs.data_valid:
@@ -173,7 +181,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     return (block_buffer_1, block_buffer_2, block_buffer_3, block_buffer_4, data_valid_assign,
             output_assign, read_mux, write_mux, read_counter_update, write_counter_update,
-            data_input, or_signals)
+            data_input, or_signals, stop_source)
 
 def convert():
 

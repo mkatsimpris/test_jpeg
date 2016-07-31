@@ -56,6 +56,7 @@ class triple_buffer_out(object):
         self.data_width = data_width
         self.data_out = Signal(intbv(0)[data_width:])
         self.data_valid = Signal(bool(0))
+        self.stop_source = Signal(bool(0))
 
 class outputs_frontend(object):
 

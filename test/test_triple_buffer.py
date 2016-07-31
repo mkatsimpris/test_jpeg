@@ -47,31 +47,35 @@ def test_triple_buffer():
     inputs = triple_buffer_in()
     outputs = triple_buffer_out()
 
-    rows, cols = 128, 128
+    rows, cols = 56,56
     inandouts = InputsAndOutputs(rows, cols)
     inandouts.initialize()
 
     input_list = inandouts.inputs
     output_list = inandouts.outputs
 
-    print(input_list)
-    print(output_list)
+    #print(input_list)
+    #print(output_list)
 
     @block
-    def bench_block_buffer():
+    def bench_triple_buffer():
         tdut = triple_block_buffer(inputs, outputs, clock, reset, cols)
         tbclock = clock_driver(clock)
 
         @instance
         def tbstim():
             yield pulse_reset(reset, clock)
-            inputs.data_valid.next = True
 
             data = 0
             while(data != len(input_list)):
-                inputs.data_in.next = input_list[data]
-                data += 1
-                yield clock.posedge
+                if(outputs.stop_source == False):
+                    inputs.data_valid.next = True
+                    inputs.data_in.next = input_list[data]
+                    data += 1
+                    yield clock.posedge
+                elif(outputs.stop_source):
+                    inputs.data_valid.next = False
+                    yield clock.posedge
             inputs.data_valid.next = False
 
         @instance
@@ -79,14 +83,14 @@ def test_triple_buffer():
             yield outputs.data_valid.posedge
             yield delay(1)
             for i in range(len(output_list)):
-                print("%d %d" %(int(outputs.data_out), output_list[i]))
-                #assert outputs.data_out == output_list[i]
+                #print("%d %d" %(int(outputs.data_out), output_list[i]))
+                assert outputs.data_out == output_list[i]
                 yield clock.posedge
                 yield delay(1)
             raise StopSimulation
 
         return tdut, tbstim, tbclock, monitor
 
-    run_testbench(bench_block_buffer)
+    run_testbench(bench_triple_buffer, False, 0)
 
 test_triple_buffer()
