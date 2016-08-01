@@ -39,7 +39,6 @@ class block_buffer_out(object):
     def __init__(self, data_width=24):
         self.data_out = Signal(intbv(0)[data_width:])
         self.data_valid = Signal(bool(0))
-        self.stop_source = Signal(bool(0))
         self.write_all = Signal(bool(0))
         self.read_all = Signal(bool(0))
 

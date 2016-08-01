@@ -10,7 +10,16 @@ from jpegenc.subblocks.common import assign
 
 @block
 def block_buffer(inputs, outputs, clock, reset, line_width=16):
+    """Block Buffer Module
 
+    This modules consists of 8 rams. The size of the rams is define by The
+    parameter line_width.
+
+    Inputs:
+        data_in, data_valid, ready_to_output_data
+    Outputs:
+        data_out, data_valid, write_all, readd_all
+    """
     addr_width = int(ceil(log2(line_width)))
     block_number = int(line_width/8.0)
     data_width = inputs.data_width
@@ -59,11 +68,13 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def ram_input_assign():
+        """store inputs in a temporary array"""
         for i in range(8):
             data_in_temp[i].next = inputs.data_in
 
     @always_seq(clock.posedge, reset=reset)
     def pixel_write_update():
+        """write signals update"""
         if inputs.data_valid:
             if pixel_row_write == line_width - 1:
                 pixel_row_write.next = 0
@@ -80,6 +91,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def write_enable_update():
+        """write enable update"""
         if inputs.data_valid:
             for i in range(8):
                 if row_select == i:
@@ -92,15 +104,18 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def write_addr_update():
+        """write address update"""
         if inputs.data_valid:
             write_addr_temp[row_select].next = pixel_row_write
 
     @always_seq(clock.posedge, reset=reset)
     def output_assign():
+        """from the temporary data out array to output signal assign"""
         outputs.data_out.next = ram_data_out_temp[row_read_reg]
 
     @always_seq(clock.posedge, reset=reset)
     def pixel_read_update():
+        """update the read signals"""
         row_read_reg.next = row_read
         outputs.read_all.next = read_all_reg
         if start_to_output_data and inputs.ready_to_output_data:
@@ -130,6 +145,7 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def block_update():
+        """block counter update"""
         if pixel_row_read == right_index - 4:
             if row_read == 7:
                 if pass_num == 2:
@@ -140,12 +156,14 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def index_muls():
+        """compute the indeces for the block indexing"""
         left_index_1.next = current_block * 8
         left_index_2.next = current_block_1 * 8
         right_index.next = (current_block + 1) * 8 - 1
 
     @always_comb
     def right_index_mux():
+        """count the number of passes"""
         if pass_num == 2:
             left_index.next = left_index_2
         else:
@@ -153,11 +171,13 @@ def block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def start_to_output():
+        """start to output data"""
         if row_select == 7 and pixel_row_write == 7:
             start_to_output_data.next = True
 
     @always_seq(clock.posedge, reset=reset)
     def start_to_output_1():
+        """data valid signal assert"""
         outputs.data_valid.next = data_valid_reg_1
         if start_to_output_data and inputs.ready_to_output_data:
             data_valid_reg_1.next = True

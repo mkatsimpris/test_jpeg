@@ -10,7 +10,16 @@ from jpegenc.subblocks.common import assign
 
 @block
 def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
+    """Triple Block Buffer Module
 
+    This module consist of 4 block buffer modules. The output of data is continuous.
+    The input of data depends on the stop_source output signal.
+
+    Input:
+        data_in, data_valid
+    Output:
+        data_out, data_valid, stop_source
+    """
     data_in_each_buffer = line_width * 8
     data_to_read = data_in_each_buffer * 3
 
@@ -58,6 +67,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def write_counter_update():
+        """write signals update"""
         if inputs.data_valid:
             if write_counter == data_in_each_buffer - 1:
                 write_counter.next = 0
@@ -70,6 +80,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def read_counter_update():
+        """read signals update"""
         if data_valid_or:
             if read_counter == data_to_read - 3:
                 read_counter.next = read_counter + 1
@@ -88,6 +99,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_comb
     def read_mux():
+        """select from which buffer to read"""
         if buffer_select_read == 0 and buffer_select_read == 0:
             block_buffer_in_1.ready_to_output_data.next = True
             block_buffer_in_2.ready_to_output_data.next = False
@@ -127,6 +139,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def stop_source():
+        """stop source assign"""
         if block_buffer_out_4.write_all:
             outputs.stop_source.next = True
         elif block_buffer_out_3.read_all:
@@ -134,6 +147,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_comb
     def write_mux():
+        """select in which block buffer to write"""
         if inputs.data_valid:
             if buffer_select_write == 0:
                 block_buffer_in_1.data_valid.next = True
@@ -163,6 +177,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def output_assign():
+        """select the block buffer output"""
         if buffer_select_read_1 == 0:
             outputs.data_out.next = block_buffer_out_1.data_out
         elif buffer_select_read_1 == 1:
@@ -174,6 +189,7 @@ def triple_block_buffer(inputs, outputs, clock, reset, line_width=16):
 
     @always_seq(clock.posedge, reset=reset)
     def data_valid_assign():
+        """data valid signal assign"""
         if data_valid_or:
             outputs.data_valid.next = True
         else:
